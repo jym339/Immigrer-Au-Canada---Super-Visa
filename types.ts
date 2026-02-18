@@ -1,11 +1,19 @@
 
+export type Language = 'FR' | 'EN';
+
 export interface LicoEntry {
-  size: string;
+  size: {
+    FR: string;
+    EN: string;
+  };
   income: number;
 }
 
 export interface Testimony {
-  text: string;
+  text: {
+    FR: string;
+    EN: string;
+  };
   author: string;
   location: string;
 }
