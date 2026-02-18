@@ -33,7 +33,7 @@ const App: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [status, setStatus] = useState('Citoyen Canadien');
   const [parentsCount, setParentsCount] = useState('1');
-  const [dependents, setDependents] = useState('');
+  const [householdSize, setHouseholdSize] = useState('1'); // Initialisé à 1 (le sponsor seul)
   const [income, setIncome] = useState('');
   const [result, setResult] = useState<EligibilityResult | null>(null);
   const [activeLegalPage, setActiveLegalPage] = useState<LegalPage>(null);
@@ -73,17 +73,20 @@ const App: React.FC = () => {
     }
 
     const numIncome = parseFloat(income.replace(/[^0-9.]/g, ''));
-    const numDependents = parseInt(dependents) || 0;
+    const numHousehold = Math.max(1, parseInt(householdSize) || 1); // Minimum 1 (le parrain)
     const numParentsToInvite = parseInt(parentsCount) || 1;
     
-    // Total family size = Sponsor (1) + Dependents in Canada + Parents invited
-    const totalFamilySize = 1 + numDependents + numParentsToInvite; 
+    // Taille totale = Foyer actuel au Canada (incluant le parrain) + nouveaux parents
+    const totalFamilySize = numHousehold + numParentsToInvite; 
     
     let requiredIncome = 0;
+    const maxIndex = LICO_DATA.length - 1;
+    
     if (totalFamilySize <= 7) {
-      requiredIncome = LICO_DATA[totalFamilySize - 1]?.income || 80784;
+      requiredIncome = LICO_DATA[totalFamilySize - 1]?.income || LICO_DATA[maxIndex].income;
     } else {
-      requiredIncome = 80784 + (totalFamilySize - 7) * 8224;
+      // Pour chaque personne additionnelle au-delà de 7
+      requiredIncome = LICO_DATA[maxIndex].income + (totalFamilySize - 7) * 9000;
     }
 
     if (isNaN(numIncome) || numIncome <= 0) {
@@ -106,7 +109,7 @@ const App: React.FC = () => {
       setResult({
         status: 'ineligible',
         message: t.eligibility.resultIneligible,
-        details: t.eligibility.resultGapNote(gap.toLocaleString())
+        details: t.eligibility.resultGapNote(gap.toLocaleString(), requiredIncome.toLocaleString(), totalFamilySize)
       });
     }
   };
@@ -352,7 +355,7 @@ const App: React.FC = () => {
                   ))}
                   <tr className="bg-slate-50">
                     <td className="px-6 py-5 text-slate-500 italic">{t.lico.tableMore}</td>
-                    <td className="px-6 py-5 text-slate-900 font-bold">80 784 + 8 224 / pers.</td>
+                    <td className="px-6 py-5 text-slate-900 font-bold">88 628 + 9 000 / pers.</td>
                   </tr>
                 </tbody>
               </table>
@@ -416,8 +419,8 @@ const App: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{t.eligibility.formDependents}</label>
-                        <input type="number" value={dependents} onChange={(e) => setDependents(e.target.value)} placeholder={t.eligibility.formDependentsPlaceholder} className="w-full bg-white border border-slate-300 rounded-xl px-5 py-4 focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm" />
+                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{t.eligibility.formHousehold}</label>
+                        <input type="number" value={householdSize} onChange={(e) => setHouseholdSize(e.target.value)} placeholder={t.eligibility.formHouseholdPlaceholder} className="w-full bg-white border border-slate-300 rounded-xl px-5 py-4 focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{t.eligibility.formIncome}</label>
